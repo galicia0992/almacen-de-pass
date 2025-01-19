@@ -11,9 +11,18 @@ struct AlmacenView: View {
     @State var pass = ""
     @State var url = ""
     @State var email = ""
+    @State var showPass: Bool = false
     @State var info: [Datos] = []
     let opciones: [Opciones]
     @State var opcionSeleccionada: Opciones?
+    
+    func showPassToggle(){
+        if showPass{
+            showPass = false
+        }else{
+            showPass = true
+        }
+    }
     
     func addInfo(){
         let infos = Datos(email: email, tipo: opcionSeleccionada?.nombre ?? "Sin Tipo", pass: pass, url: url)
@@ -29,6 +38,9 @@ struct AlmacenView: View {
         if let encodedTasks = try? JSONEncoder().encode(info){
             UserDefaults.standard.set(encodedTasks, forKey: "info")
         }
+    }
+    func deleteInfo(at offset: IndexSet){
+        info.remove(atOffsets: offset)
     }
     
     var body: some View {
@@ -100,7 +112,7 @@ struct AlmacenView: View {
             }
             .padding(.top, 16) // Espaciado superior para el botón
             
-            List {
+            List{
                 ForEach(info) { info in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -121,8 +133,16 @@ struct AlmacenView: View {
                             Text("Contraseña:")
                                 .fontWeight(.bold)
                                 .foregroundColor(.blue)
-                            Text(info.pass)
-                                .foregroundColor(.primary)
+                            Text(showPass ? info.pass : String(repeating: "•", count: info.pass.count))
+                            Spacer()
+                            Button(action: showPassToggle) {
+                                if !showPass {
+                                    Image("cerrado")
+                                }else{
+                                    Image("abierto")
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
                         }
                         HStack {
                             Text("URL:")
@@ -132,24 +152,18 @@ struct AlmacenView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color(UIColor.systemGray6)) // Fondo claro
-                    )
-                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                    .padding(.vertical, 4)
                 }
+                .onDelete(perform: deleteInfo)
             }
             
         }
         .padding(.horizontal, 16) // Márgenes laterales para el contenido
-        .background(Color(UIColor.systemBackground))
+        
         .onAppear{
            loadInfo()
         }
         .onChange(of: info){ _ in
-            saveInfo() 
+            saveInfo()
         }
     }
         
